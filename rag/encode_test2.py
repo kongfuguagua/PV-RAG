@@ -110,7 +110,7 @@ print(f'0:{vecs[10:11, :]}\n1:{vecs[110:111, :]}\n2:{vecs[210:211, :]}\n3:{vecs[
 # 加三个积分维度
 p1, p2, divide = 15, 25, 0.1
 new_vec = np.zeros((vecs.shape[0], vecs.shape[1]+3))
-#new_vec[:vecs.shape[0], :5] = vecs
+new_vec[:vecs.shape[0], :5] = vecs
 for i in range(vecs.shape[0]):
     new_vec[i, 5] = divide * np.sum(all_data[i, :p1, 1])
     new_vec[i, 6] = divide * np.sum(all_data[i, p1:p2, 1])

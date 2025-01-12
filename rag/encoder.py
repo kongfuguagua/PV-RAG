@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 
 n_epochs = 400
 batch_size = 10
-simu_data = loadmat(r'F:\task1\dataset\simu_data.mat')
-real_data = loadmat(r'F:\task1\dataset\real_data.mat')
+simu_data = loadmat(r'dataset/simu_data.mat')
+real_data = loadmat(r'dataset/real_data.mat')
 q = 1.60217646e-19
 k = 1.3806503e-23
 qk = q/k

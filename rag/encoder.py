@@ -14,18 +14,6 @@ import math
 import torch.optim as optim
 import matplotlib.pyplot as plt
 
-
-n_epochs = 400
-batch_size = 10
-simu_data = loadmat(r'dataset/simu_data.mat')
-real_data = loadmat(r'dataset/real_data.mat')
-q = 1.60217646e-19
-k = 1.3806503e-23
-qk = q/k
-lr = 3e-3
-
-
-
 # 输入40*2的IV曲线，编码为5*1向量
 class encoder(nn.Module):
     def __init__(self):
@@ -131,6 +119,14 @@ def train():
     
 
 if __name__ == '__main__':
+    n_epochs = 400
+    batch_size = 10
+    simu_data = loadmat(r'dataset/simu_data.mat')
+    real_data = loadmat(r'dataset/real_data.mat')
+    q = 1.60217646e-19
+    k = 1.3806503e-23
+    qk = q/k
+    lr = 3e-3
     # 制作数据集
     simu_dataset = []
     nor_data = simu_data['nor']

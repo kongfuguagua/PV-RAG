@@ -66,7 +66,9 @@ class Loss(nn.Module):
         c, Is, n, Rs, Rp = predictions[:,0],predictions[:,1],predictions[:,2],predictions[:,3],predictions[:,4]
         Ip = c * irra   # 光电流与辐照度基本成正比
 
-        exponent = qk * (v + Rs.unsqueeze(1) * i) / (n.unsqueeze(1) * T.unsqueeze(1))
+	# I = I_{ph} - I_{0}\left[\exp\left(\frac{V + IR_{s}}{nN_{s}kT/q}\right) - 1\right] - \frac{V + IR_{s}}{R_{sh}}
+
+        exponent = qk * (v + Rs.unsqueeze(1) * i) / (n.unsqueeze(1) * T.unsqueeze(1)) # 指数项
         exponent = torch.clamp(exponent, max=16)
         loss_matrix = Ip.unsqueeze(1) - Is.unsqueeze(1) * (torch.exp(exponent) - 1) - (v + Rs.unsqueeze(1) * i) / Rp.unsqueeze(1) - i
         loss = torch.sum(abs(loss_matrix))
@@ -122,17 +124,17 @@ if __name__ == '__main__':
     n_epochs = 400
     batch_size = 10
     simu_data = loadmat(r'dataset/simu_data.mat')
-    real_data = loadmat(r'dataset/real_data.mat')
-    q = 1.60217646e-19
-    k = 1.3806503e-23
-    qk = q/k
+    real_data = loadmat(r'dataset/real_data.mat') # 5*2201*40*5 5种，每种2201个样本，每个样本40个采样点，采样点5个特征【电压、电流、辐照、温度、label】
+    q = 1.60217646e-19 # 电子电荷
+    k = 1.3806503e-23 # 玻尔兹曼常数
+    qk = q/k # 电荷与玻尔兹曼常数之比
     lr = 3e-3
     # 制作数据集
     simu_dataset = []
-    nor_data = simu_data['nor']
-    d = np.zeros((nor_data.shape[1], 40, 5))
-    for j in range(nor_data.shape[1]):
-        d[j] = nor_data[0][j]
+    nor_data = simu_data['nor'] # 1*2201*40*5，
+    d = np.zeros((nor_data.shape[1], 40, 5)) # 2201*40*5
+    for j in range(nor_data.shape[1]): # 2201，对电压、电流自归一化
+        d[j] = nor_data[0][j] # 40*5
         max_v, min_v = np.max(d[j, :, 0]), np.min(d[j, :, 0])
         max_i, min_i = np.max(d[j, :, 1]), np.min(d[j, :, 1])
         d[j, :, 0] = (d[j, :, 0] - min_v) / (max_v - min_v)
@@ -147,7 +149,7 @@ if __name__ == '__main__':
     #     d[:, :, i] = (d[:, :, i] - min_vals[i]) / (max_vals[i] - min_vals[i])
 
 
-    dataset = np.array(d, dtype=np.float32)
+    dataset = np.array(d, dtype=np.float32) 
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])

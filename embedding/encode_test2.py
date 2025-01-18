@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.io import loadmat
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from embedding import encoder
+from encoder import encoder
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -60,10 +60,10 @@ def tsne(X, Y, n=2):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 Encoder = encoder()
-Encoder.load_state_dict(torch.load(r'model/nor_1001.pth', map_location=device))
+Encoder.load_state_dict(torch.load(r'F:\task1\rag\model\nor_1001.pth', map_location=device))
 Encoder.eval()
 
-simu_data = loadmat(r'dataset/all_sample.mat')#复杂样本数据集
+simu_data = loadmat(r'F:\task1\dataset\all_sample.mat')
 lab = ['nor', 'open_circuit', 'partial_shading1', 'partial_shading2', 'partial_shading3', 'short_circuit1', 'short_circuit2']
 lab1 = [0, 1, 2, 2, 2, 3, 3]
 all_data, label = [], []

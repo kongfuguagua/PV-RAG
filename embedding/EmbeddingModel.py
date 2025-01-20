@@ -15,9 +15,9 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 
 # 输入40*2的IV曲线，编码为5*1向量
-class encoder(nn.Module):
+class EmbeddingModel(nn.Module):
     def __init__(self):
-        super(encoder, self).__init__()
+        super(EmbeddingModel, self).__init__()
         def conv(input, output, ker_size=3, stride=1, pad=1):
             c = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels=input,             
@@ -53,7 +53,24 @@ class encoder(nn.Module):
         x = self.fc2(x)
         # x = F.tanh(x)
         return x
-        
+    
+    def info(self):
+        return {
+            "input_shape": (40, 2),
+            "output_shape": (5,),
+            "model_type": "Convolutional Neural Network",
+            "layers": [
+                {"layer_type": "Conv2d", "in_channels": 1, "out_channels": 3, "kernel_size": 3, "stride": 1, "padding": 1},
+                {"layer_type": "Conv2d", "in_channels": 3, "out_channels": 5, "kernel_size": 3, "stride": 1, "padding": 1},
+                {"layer_type": "MaxPool2d", "kernel_size": 2, "stride": 2},
+                {"layer_type": "Conv2d", "in_channels": 5, "out_channels": 8, "kernel_size": 3, "stride": 1, "padding": 1},
+                {"layer_type": "Conv2d", "in_channels": 8, "out_channels": 16, "kernel_size": 3, "stride": 1, "padding": 1},
+                {"layer_type": "Linear", "in_features": 320, "out_features": 160},
+                {"layer_type": "Linear", "in_features": 160, "out_features": 5}
+            ]
+        }
+    
+
 class Loss(nn.Module):
     def __init__(self):
         super(Loss, self).__init__()
@@ -158,7 +175,7 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    Encoder = encoder().to(device)
+    Encoder = EmbeddingModel().to(device)
     # 使用预训练的模型
     # Encoder.load_state_dict(torch.load(r'F:\task1\rag\model\pretrained.pth', map_location=device))
     optimizer = optim.Adam(Encoder.parameters(), lr=lr)

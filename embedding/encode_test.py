@@ -67,49 +67,36 @@ def load_encoder(model_path, device):
 
 
 def load_data(data_path, labels):
-    simu_data = loadmat(data_path)
+    raw_data = loadmat(data_path)
     all_data, label = [], []
     for i in range(len(labels)):
-        data = simu_data[labels[i]]
+        data = raw_data[labels[i]]
         for j in range(data.shape[1]):
             all_data.append(data[0, j][:, :2])
             label.append(i)
     return np.array(all_data), label
 
 
-def self_normalize_data(all_data, num):
-    for i in range(all_data.shape[0]):
-        max_v, min_v = np.max(all_data[i % num, :, 0]), np.min(all_data[i % num, :, 0])
-        max_i, min_i = np.max(all_data[i % num, :, 1]), np.min(all_data[i % num, :, 1])
-        all_data[i, :, 0] = (all_data[i, :, 0] - min_v) / (max_v - min_v)
-        all_data[i, :, 1] = (all_data[i, :, 1] - min_i) / (max_i - min_i)
+def normalize_data(all_data, norm_data):#all_data: 40*2, norm_data: 40*2
+    max_v, min_v = np.max(norm_data[ :, 0]), np.min(norm_data[ :, 0])
+    max_i, min_i = np.max(norm_data[ :, 1]), np.min(norm_data[ :, 1])
+    all_data[ :, 0] = (all_data[ :, 0] - min_v) / (max_v - min_v)
+    all_data[ :, 1] = (all_data[ :, 1] - min_i) / (max_i - min_i)
     return all_data
 
 
-class MyDataset(Dataset):
-    def __init__(self, data, labels):
-        self.data = data
-        self.labels = labels
 
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return torch.tensor(self.data[idx], dtype=torch.float32), torch.tensor(self.labels[idx], dtype=torch.int16)
+def extract_features(encoder, data, device):
+    data = data.unsqueeze(0).to(device)
+    out = encoder(data)
+    out = out.detach().cpu().numpy()
+    return out
 
 
-def create_dataloader(data, labels, batch_size):
-    dataset = MyDataset(data, labels)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
-
-def encode_data(encoder, dataloader, device):
+def encode_data(encoder, all_data, device):
     vecs = []
-    for batch_data, _ in dataloader:
-        batch_data = batch_data.to(device)
-        out = encoder(batch_data) # 440*100
-        out = out.detach().cpu().numpy()
-        vecs.extend(out) # 440*100
+    for data in all_data:
+        vecs.extend(extract_features(encoder, data, device))
     return np.array(vecs)
 
 
@@ -138,13 +125,17 @@ def main():
     Encoder = load_encoder(encoder_model_path, device)
     all_data, label = load_data(data_path, labels) # 500*40*2, 500
     num = len(all_data) // 5 
-    all_data = self_normalize_data(all_data, num)
+    norm_data= all_data[:num]
+    for i in range(all_data.shape[0]):
+        all_data[i] = normalize_data(all_data[i],norm_data[i%num])
 
-    batch_size = 1
-    dataloader = create_dataloader(all_data, label, batch_size)
-    vecs = encode_data(Encoder, dataloader, device) # 500*5
+    vecs=[]
+    for idx in range(len(all_data)):
+        data=torch.tensor(all_data[idx], dtype=torch.float32)
+        vecs.extend(extract_features(Encoder, data, device))
+    vecs = np.array(vecs)
 
-    print(f'0:{vecs[10:11, :]}\n1:{vecs[110:111, :]}\n2:{vecs[210:211, :]}\n3:{vecs[310:311, :]}\n4:{vecs[410:411, :]}')
+    # print(f'0:{vecs[10:11, :]}\n1:{vecs[110:111, :]}\n2:{vecs[210:211, :]}\n3:{vecs[310:311, :]}\n4:{vecs[410:411, :]}')
 
     #按区间重新编码（图像机理）
     p1, p2, divide = 10, 25, 0.1 # divide*sum[0,p1],divide*[p1,p2],divide*[p2,40]
